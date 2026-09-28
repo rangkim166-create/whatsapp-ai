@@ -1,2 +1,3 @@
-# whatsapp-ai
-Whatapp replying ai
+# WhatsApp AI
+
+AI-powered WhatsApp automation project.
