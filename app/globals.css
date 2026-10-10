@@ -9,8 +9,8 @@ textarea{min-height:130px;resize:vertical;line-height:1.55}
 .shell{min-height:100vh;background:radial-gradient(ellipse at 12% 0%,#163122 0,transparent 38%),radial-gradient(ellipse at 100% 22%,#10212a 0,transparent 35%),var(--bg)}
 .top{max-width:960px;margin:auto;padding:20px 22px;display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px solid #ffffff0d}
 .brand{display:flex;gap:11px;align-items:center;font-weight:850;font-size:16px;letter-spacing:-.02em}
-.logo{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;background:var(--green);color:#062411;font-size:21px;font-weight:950;box-shadow:0 5px 22px #25d36624}
-.brand-sub{font-size:11px;font-weight:500;color:var(--muted);margin-top:3px;letter-spacing:0}
+.logo{overflow:hidden;flex:0 0 42px;width:42px;height:42px;border-radius:14px;display:grid;place-items:center;background:var(--green);color:#062411;font-size:21px;font-weight:950;box-shadow:0 5px 22px #25d36624}
+.brand-logo-image{display:block;width:100%;height:100%;object-fit:cover;border-radius:inherit}.loading-mark{overflow:hidden}.loading-mark img{display:block;width:100%;height:100%;object-fit:cover}.brand-sub{font-size:11px;font-weight:500;color:var(--muted);margin-top:3px;letter-spacing:0}
 .status{font-size:11px;color:#c6d0d3;background:#ffffff08;border:1px solid #ffffff12;padding:8px 10px;border-radius:999px;white-space:nowrap}
 .status.online{color:var(--mint);border-color:#25d36644;background:#25d3660d}
 .main{width:min(760px,calc(100% - 28px));margin:auto;padding:28px 0 44px}
