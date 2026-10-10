@@ -21,7 +21,7 @@ async function save(){if(!userId)return setMessage("Verify your phone first.");s
 if(loading)return <div className="loading"><div className="loading-mark">W</div><p>Opening your workspace…</p></div>;
 return <div className="shell">
   <header className="top">
-    <div className="brand"><div className="logo"><img src="https://gdmaahsxtmosuvzazdae.supabase.co/storage/v1/object/public/site-assets/whatsapp-ai-robot.png" alt="WhatsApp AI robot assistant" width="44" height="44" style={{width:"100%",height:"100%",objectFit:"cover",borderRadius:"inherit"}} onError={(e)=>{e.currentTarget.style.display="none";const p=e.currentTarget.parentElement;if(p&&!p.querySelector(".logo-fallback")){const f=document.createElement("span");f.className="logo-fallback";f.textContent="W";p.appendChild(f)}}}/></div><div><div>WhatsApp AI</div><div className="brand-sub">Your personal reply workspace</div></div></div>
+    <div className="brand"><div className="logo"><img src="https://gdmaahsxtmosuvzazdae.supabase.co/storage/v1/object/public/Icon/file_000000002a508210a68fe5e95e54ccef.png" alt="WhatsApp AI robot assistant" width="44" height="44" style={{width:"100%",height:"100%",objectFit:"cover",borderRadius:"inherit"}} onError={(e)=>{e.currentTarget.style.display="none";const p=e.currentTarget.parentElement;if(p&&!p.querySelector(".logo-fallback")){const f=document.createElement("span");f.className="logo-fallback";f.textContent="W";p.appendChild(f)}}}/></div><div><div>WhatsApp AI</div><div className="brand-sub">Your personal reply workspace</div></div></div>
     <div className={"status "+(userId?"online":"")}>{userId?"● Signed in":"● Not signed in"}</div>
   </header>
   <main className="main">
