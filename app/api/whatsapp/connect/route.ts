@@ -1,21 +1,16 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 export const dynamic = "force-dynamic";
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://gdmaahsxtmosuvzazdae.supabase.co";
-// Prefer the new publishable key, but support the project's existing legacy anon key.
-const anonKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 const engineUrl = (process.env.ENGINE_URL || "https://whatapp-ai-egine.onrender.com").replace(/\/$/, "");
 const engineSecret = process.env.ENGINE_SECRET || "";
-async function authUser(req: Request) {
-  const token = (req.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
-  if (!token || !anonKey) return null;
-  const client = createClient(supabaseUrl, anonKey, { auth: { persistSession: false, autoRefreshToken: false } });
-  const { data, error } = await client.auth.getUser(token);
-  return error ? null : data.user;
+// The engine secret stays server-side. Only this fixed engine is called; phone and
+// session IDs are validated before forwarding, so this route is not a general proxy.
+function sameOrigin(req: Request) {
+  const origin = req.headers.get("origin");
+  if (!origin) return true;
+  try { return new URL(origin).host === new URL(req.url).host; } catch { return false; }
 }
 export async function POST(req: Request) {
-  const user = await authUser(req);
-  if (!user) return NextResponse.json({ error: "Please sign in again before connecting WhatsApp." }, { status: 401 });
+  if (!sameOrigin(req)) return NextResponse.json({ error: "Invalid request origin." }, { status: 403 });
   if (!engineSecret) return NextResponse.json({ error: "Engine connection is not configured yet." }, { status: 503 });
   try {
     const { phone, sessionId } = await req.json();
@@ -30,8 +25,7 @@ export async function POST(req: Request) {
   } catch (error) { return NextResponse.json({ error: error instanceof Error ? error.message : "Connection request failed." }, { status: 502 }); }
 }
 export async function GET(req: Request) {
-  const user = await authUser(req);
-  if (!user) return NextResponse.json({ error: "Please sign in again." }, { status: 401 });
+  if (!sameOrigin(req)) return NextResponse.json({ error: "Invalid request origin." }, { status: 403 });
   if (!engineSecret) return NextResponse.json({ error: "Engine connection is not configured yet." }, { status: 503 });
   const sid = new URL(req.url).searchParams.get("sessionId") || "";
   if (!/^[a-zA-Z0-9_-]{8,80}$/.test(sid)) return NextResponse.json({ error: "Invalid session ID." }, { status: 400 });
