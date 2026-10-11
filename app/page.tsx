@@ -73,7 +73,7 @@ return <div className="shell">
         <button className="primary full save-auto" onClick={save}>{saved?"✓ Preferences saved":"Save preferences"}</button>{message&&<div className="notice">{message}</div>}
       </section>}
       <footer className="footer"><span>WhatsApp AI</span><span>Connect directly. Automatic replies are optional.</span></footer>
-    </>}
+    </>
   </main>
 </div>
 }
