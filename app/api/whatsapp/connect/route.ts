@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 export const dynamic = "force-dynamic";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://gdmaahsxtmosuvzazdae.supabase.co";
-const anonKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "";
+// Prefer the new publishable key, but support the project's existing legacy anon key.
+const anonKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 const engineUrl = (process.env.ENGINE_URL || "https://whatapp-ai-egine.onrender.com").replace(/\/$/, "");
 const engineSecret = process.env.ENGINE_SECRET || "";
 async function authUser(req: Request) {
