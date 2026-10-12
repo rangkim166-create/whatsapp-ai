@@ -123,3 +123,16 @@ textarea{min-height:130px;resize:vertical;line-height:1.55}
   .primary.full{min-height:48px}
   input,textarea,.reply-select{font-size:16px}
 }
+
+/* Per-contact relationship controls */
+.relationship-contact-control{margin:14px 0 0;padding:16px;border:1px solid #2f6650;border-radius:16px;background:linear-gradient(140deg,#123226aa,#101c21)}
+.relationship-contact-control>p{margin:7px 0 12px;color:#b7c9c4;font-size:13px;line-height:1.5}
+.relationship-contact-control .relationship-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.relationship-contact-control .relationship-options button{min-height:42px;border:1px solid #334b43;border-radius:11px;background:#101b20;color:#d8e8e1;padding:9px;font-size:12px}
+.relationship-contact-control .relationship-options button.active{border-color:#31d77a;background:#153e2a;color:#e5ffed;box-shadow:inset 0 0 0 1px #31d77a55}
+.relationship-contact-control .relationship-options button:disabled{opacity:.65}
+.relationship-contact-control>small{display:block;margin-top:10px;color:#9db6aa;font-size:11px;line-height:1.5}
+.group-ai-control{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px;padding:14px;border:1px solid #2a3a40;border-radius:14px;background:#0d151a}
+.group-ai-control p{margin:5px 0 0;color:#9fb2b7;font-size:12px;line-height:1.45}
+.group-ai-control button{flex-shrink:0}
+@media(max-width:540px){.relationship-contact-control{padding:12px}.group-ai-control{align-items:flex-start;flex-direction:column}.group-ai-control button{width:100%}}
