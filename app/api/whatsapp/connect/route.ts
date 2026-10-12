@@ -8,7 +8,7 @@ const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "";
 const attempts = new Map<string, { count: number; resetAt: number }>();
 function sameOrigin(req: Request) {
   const origin = req.headers.get("origin");
-  if (!origin) return false;
+  if (!origin) return true; // Same-origin GET requests may omit Origin; Bearer auth is still mandatory.
   try { return new URL(origin).host === new URL(req.url).host; } catch { return false; }
 }
 function limited(key: string, max: number, windowMs: number) {
