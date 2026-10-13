@@ -159,3 +159,6 @@ textarea{min-height:130px;resize:vertical;line-height:1.55}
 .auth-gate .field-label{margin-top:3px}
 .auth-gate .helper{margin-top:5px}
 @media(max-width:540px){.top-actions{gap:6px}.site-logout{padding:8px 10px;font-size:12px}.top{gap:10px}.auth-main{padding-top:16px}}
+
+/* Auth route link styled consistently with the buttons */
+.auth-link{display:flex;align-items:center;justify-content:center;text-align:center;text-decoration:none}
