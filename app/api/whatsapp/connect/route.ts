@@ -68,3 +68,31 @@ export async function GET(req: Request) {
     return NextResponse.json(await upstream.json().catch(() => ({})), { status: upstream.status, headers: { "Cache-Control": "no-store" } });
   } catch { return fail("Could not check the WhatsApp engine.", 502); }
 }
+
+export async function DELETE(req: Request) {
+  if (!sameOrigin(req)) return fail("Invalid request origin.", 403);
+  if (!engineSecret) return fail("Engine connection is not configured.", 503);
+  const auth = await authenticate(req);
+  if (!auth) return fail("Please sign in before disconnecting WhatsApp.", 401);
+  try {
+    const body = await req.json().catch(() => ({}));
+    const sid = String(body.sessionId || "").trim();
+    if (!/^[a-zA-Z0-9_-]{8,80}$/.test(sid)) return fail("Invalid session ID.", 400);
+    const { data: owned, error: lookupError } = await auth.client.from("whatsapp_connections").select("id").eq("user_id", auth.user.id).eq("session_name", sid).maybeSingle();
+    if (lookupError || !owned) return fail("This WhatsApp session does not belong to your account.", 403);
+    const upstream = await fetch(engineUrl + "/disconnect", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-engine-secret": engineSecret },
+      body: JSON.stringify({ sessionId: sid }),
+      cache: "no-store",
+      signal: AbortSignal.timeout(10000)
+    });
+    const result = await upstream.json().catch(() => ({}));
+    if (!upstream.ok) return fail(result.error || "Could not disconnect the WhatsApp session.", upstream.status);
+    const { error: updateError } = await auth.client.from("whatsapp_connections").update({ status: "disconnected", ai_takeover: false }).eq("id", owned.id).eq("user_id", auth.user.id);
+    if (updateError) return fail("WhatsApp disconnected, but saved status could not be updated. Refresh the page.", 500);
+    return NextResponse.json({ ok: true, ...result }, { headers: { "Cache-Control": "no-store" } });
+  } catch {
+    return fail("Could not log out WhatsApp. Please retry.", 502);
+  }
+}
