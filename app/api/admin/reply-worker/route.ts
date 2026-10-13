@@ -10,8 +10,19 @@ export async function POST(req: NextRequest) {
   const admins = (process.env.WORKER_DASHBOARD_ADMIN_EMAILS || "")
     .split(",").map((v) => v.trim().toLowerCase()).filter(Boolean);
 
-  if (!url || !publishableKey || !serviceKey || admins.length === 0) {
-    return NextResponse.json({ error: "Server configuration incomplete" }, { status: 503 });
+  const missingConfiguration = [
+    !url && "NEXT_PUBLIC_SUPABASE_URL",
+    !publishableKey && "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
+    !serviceKey && "SUPABASE_SERVICE_ROLE_KEY",
+    admins.length === 0 && "WORKER_DASHBOARD_ADMIN_EMAILS",
+  ].filter(Boolean);
+
+  if (missingConfiguration.length > 0) {
+    // Report names only; never expose secret values.
+    return NextResponse.json({
+      error: "Server configuration incomplete",
+      missingConfiguration,
+    }, { status: 503 });
   }
 
   const token = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
