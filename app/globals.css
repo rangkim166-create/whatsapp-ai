@@ -136,3 +136,14 @@ textarea{min-height:130px;resize:vertical;line-height:1.55}
 .group-ai-control p{margin:5px 0 0;color:#9fb2b7;font-size:12px;line-height:1.45}
 .group-ai-control button{flex-shrink:0}
 @media(max-width:540px){.relationship-contact-control{padding:12px}.group-ai-control{align-items:flex-start;flex-direction:column}.group-ai-control button{width:100%}}
+
+
+/* Live WhatsApp / AI health panel */
+.health-panel{margin-top:14px;padding:16px;border:1px solid #344b44;border-radius:15px;background:linear-gradient(145deg,#10251c,#10191d)}
+.health-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-top:12px}
+.health-item{min-width:0;padding:11px;border:1px solid #2a4038;border-radius:11px;background:#0b1415}
+.health-item span{display:block;color:#a8b8bd;font-size:11px;line-height:1.4}
+.health-item strong{display:block;margin-top:6px;font-size:12px;overflow-wrap:anywhere}
+.health-good{color:#64efa0}.health-warn{color:#ffd18a}
+.health-note{margin:12px 0 0;color:#c0cfcb;font-size:12px;line-height:1.6}
+@media(max-width:540px){.health-panel{padding:12px}.health-grid{grid-template-columns:1fr}.health-item{display:flex;align-items:center;justify-content:space-between;gap:10px}.health-item strong{margin-top:0;text-align:right}}
