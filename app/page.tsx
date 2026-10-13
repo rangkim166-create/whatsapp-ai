@@ -105,7 +105,6 @@ return <div className="shell">
         {mode==="business"&&<div className="business"><div className="field-label">Business details</div><label className="field-label" htmlFor="business-name">Business name</label><input id="business-name" value={business.name} onChange={e=>setBusiness({...business,name:e.target.value})} placeholder="Your business name"/><label className="field-label" htmlFor="business-info">Products, services, prices and FAQs</label><textarea id="business-info" value={business.description} onChange={e=>setBusiness({...business,description:e.target.value})} placeholder="Add accurate information the AI can use. Include policies and things it must not promise."/><label className="field-label" htmlFor="business-location">Location</label><input id="business-location" value={business.location} onChange={e=>setBusiness({...business,location:e.target.value})} placeholder="Business location"/><label className="field-label" htmlFor="business-phone">Business contact</label><input id="business-phone" value={business.phone} onChange={e=>setBusiness({...business,phone:e.target.value})} placeholder="Business phone number"/></div>}
         <button className="primary full save-auto" onClick={save}>{saved?"✓ Preferences saved":"Save preferences"}</button>{message&&<div className="notice">{message}</div>}
       </section>}
-      {!userId&&}
       <footer className="footer"><span>WhatsApp AI</span><span>Connect directly. Automatic replies are optional.</span></footer>
     </>
   </main>
