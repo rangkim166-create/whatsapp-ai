@@ -77,7 +77,6 @@ return <div className="shell">
         <input id="wa-phone" value={waPhone} onChange={e=>setWaPhone(e.target.value)} placeholder="2567XXXXXXXX" inputMode="tel"/>
         <button className="primary full" onClick={connectWhatsApp} disabled={connecting||waStatus==="connected"}>{connecting?"Starting connection…":waStatus==="connected"?"✓ WhatsApp connected":"Connect WhatsApp"}</button>
         <div className={"connection-state "+(waStatus==="connected"?"connected":"")}><span className="state-dot"/><div><strong>{waStatus==="connected"?"Connected":waStatus==="error"?"Connection needs attention":waStatus==="pairing"||waStatus==="connecting"?"Waiting for pairing":"Not connected"}</strong><p>{waStatus==="connected"?"Your WhatsApp session is connected.":waStatus==="error"?"Read the message below and try again.":"Start the connection to request a pairing code."}</p></div></div>
-        <div className="row logout-row"><div><div className="field-label">WhatsApp session controls</div><div className="helper">Log out to unlink this session from the workspace.</div></div><button className="secondary" onClick={logoutWhatsApp} disabled={connecting}>{connecting?"Please wait…":"Log out WhatsApp"}</button></div>
         <div className="health-panel">
           <div className="section-kicker">LIVE CONNECTION CHECK</div>
           <div className="health-grid">
