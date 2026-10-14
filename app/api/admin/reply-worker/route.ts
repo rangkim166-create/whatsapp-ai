@@ -3,65 +3,143 @@ import { NextRequest, NextResponse } from "next/server";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+const NO_STORE_HEADERS = { "Cache-Control": "no-store" };
+
+function jsonError(message: string, status: number) {
+  return NextResponse.json(
+    { error: message },
+    { status, headers: NO_STORE_HEADERS }
+  );
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
 export async function POST(req: NextRequest) {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseUrlRaw = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const admins = (process.env.WORKER_DASHBOARD_ADMIN_EMAILS || "")
-    .split(",").map((v) => v.trim().toLowerCase()).filter(Boolean);
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const allowedAdmins = (process.env.WORKER_DASHBOARD_ADMIN_EMAILS ?? "")
+    .split(",")
+    .map((value) => value.trim().toLowerCase())
+    .filter(Boolean);
 
   const missingConfiguration = [
-    !url && "NEXT_PUBLIC_SUPABASE_URL",
+    !supabaseUrlRaw && "NEXT_PUBLIC_SUPABASE_URL",
     !publishableKey && "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
-    !serviceKey && "SUPABASE_SERVICE_ROLE_KEY",
-    admins.length === 0 && "WORKER_DASHBOARD_ADMIN_EMAILS",
-  ].filter(Boolean);
+    !serviceRoleKey && "SUPABASE_SERVICE_ROLE_KEY",
+    allowedAdmins.length === 0 && "WORKER_DASHBOARD_ADMIN_EMAILS",
+  ].filter((value): value is string => Boolean(value));
 
   if (missingConfiguration.length > 0) {
-    // Report names only; never expose secret values.
-    return NextResponse.json({
-      error: "Server configuration incomplete",
-      missingConfiguration,
-    }, { status: 503 });
+    return NextResponse.json(
+      {
+        error: "Server configuration incomplete",
+        missingConfiguration,
+      },
+      { status: 503, headers: NO_STORE_HEADERS }
+    );
   }
 
-  const token = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
-  if (!token) return NextResponse.json({ error: "Sign in required" }, { status: 401 });
+  let supabaseOrigin: string;
+  try {
+    const parsedUrl = new URL(supabaseUrlRaw!);
+    if (parsedUrl.protocol !== "https:" && parsedUrl.hostname !== "localhost") {
+      return jsonError("Invalid Supabase URL configuration", 500);
+    }
+    supabaseOrigin = parsedUrl.origin;
+  } catch {
+    return jsonError("Invalid Supabase URL configuration", 500);
+  }
+
+  const authorization = req.headers.get("authorization");
+  const tokenMatch = authorization?.match(/^Bearer\s+(.+)$/i);
+  const accessToken = tokenMatch?.[1]?.trim();
+
+  if (!accessToken) {
+    return jsonError("Sign in required", 401);
+  }
 
   try {
-    const auth = await fetch(url + "/auth/v1/user", {
-      headers: { apikey: publishableKey, Authorization: "Bearer " + token },
+    // Verify the actual signed-in user with Supabase Auth; never trust an email
+    // supplied in the request body or a hardcoded dashboard identity.
+    const authResponse = await fetch(`${supabaseOrigin}/auth/v1/user`, {
+      method: "GET",
+      headers: {
+        apikey: publishableKey!,
+        Authorization: `Bearer ${accessToken}`,
+      },
       cache: "no-store",
+      signal: AbortSignal.timeout(10000),
     });
-    if (!auth.ok) return NextResponse.json({ error: "Invalid session" }, { status: 401 });
 
-    const user = await auth.json();
-    const email = String(user.email || "").toLowerCase();
-    if (!admins.includes(email)) return NextResponse.json({ error: "Admin access denied" }, { status: 403 });
-
-    const queue = await fetch(
-      url + "/rest/v1/pending_replies?select=id,status,due_at,created_at&status=eq.pending&due_at=lte." +
-      encodeURIComponent(new Date().toISOString()) + "&order=due_at.asc,created_at.asc&limit=1",
-      { headers: { apikey: serviceKey, Authorization: "Bearer " + serviceKey }, cache: "no-store" }
-    );
-    if (!queue.ok) return NextResponse.json({ error: "Queue safety check failed" }, { status: 502 });
-    const rows = await queue.json();
-    const targetId = "2658784e-f356-4738-aff6-551e8d99c94f";
-    if (!Array.isArray(rows) || rows[0]?.id !== targetId) {
-      return NextResponse.json({ error: "Safety stop: approved test reply is not the oldest due item", oldestDue: rows?.[0] ?? null }, { status: 409 });
+    if (!authResponse.ok) {
+      return jsonError("Invalid session", 401);
     }
 
-    const worker = await fetch(url + "/functions/v1/reply-worker-v2", {
-      method: "POST",
-      headers: { apikey: serviceKey, Authorization: "Bearer " + serviceKey, "Content-Type": "application/json" },
-      body: JSON.stringify({ requestedBy: email, targetReplyId: targetId }),
-      cache: "no-store",
-    });
-    const raw = await worker.text();
-    let result: unknown = raw;
-    try { result = JSON.parse(raw); } catch {}
-    return NextResponse.json({ workerStatus: worker.status, result }, { status: worker.ok ? 200 : 502 });
-  } catch {
-    return NextResponse.json({ error: "Worker invocation failed" }, { status: 500 });
+    const authPayload: unknown = await authResponse.json();
+    if (!isRecord(authPayload) || typeof authPayload.email !== "string") {
+      return jsonError("Verified administrator email required", 403);
+    }
+
+    const email = authPayload.email.trim().toLowerCase();
+    if (!email || !allowedAdmins.includes(email)) {
+      return jsonError("Admin access denied", 403);
+    }
+
+    // The worker must claim the oldest eligible queue rows atomically through
+    // claim_due_pending_replies. Do not pin the run to a hardcoded test UUID or
+    // pre-check the queue with a race-prone REST query.
+    const workerResponse = await fetch(
+      `${supabaseOrigin}/functions/v1/reply-worker-v2`,
+      {
+        method: "POST",
+        headers: {
+          apikey: serviceRoleKey!,
+          Authorization: `Bearer ${serviceRoleKey!}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ requestedBy: email }),
+        cache: "no-store",
+        signal: AbortSignal.timeout(30000),
+      }
+    );
+
+    const responseText = await workerResponse.text();
+    let result: unknown = {};
+    if (responseText) {
+      try {
+        result = JSON.parse(responseText) as unknown;
+      } catch {
+        result = { error: "Worker returned a non-JSON response" };
+      }
+    }
+
+    if (!workerResponse.ok) {
+      return NextResponse.json(
+        {
+          error: "Reply worker invocation failed",
+          workerStatus: workerResponse.status,
+          result,
+        },
+        { status: 502, headers: NO_STORE_HEADERS }
+      );
+    }
+
+    return NextResponse.json(
+      { ok: true, requestedBy: email, result },
+      { status: 200, headers: NO_STORE_HEADERS }
+    );
+  } catch (error: unknown) {
+    if (error instanceof Error && error.name === "TimeoutError") {
+      return jsonError("Reply worker request timed out", 504);
+    }
+
+    console.error(
+      "Reply worker route invocation failed:",
+      error instanceof Error ? error.message : "Unknown error"
+    );
+    return jsonError("Internal server route invocation failure", 500);
   }
 }
