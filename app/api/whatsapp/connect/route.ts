@@ -4,7 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 export const dynamic = "force-dynamic";
 
 const engineUrl = (
-  process.env.ENGINE_URL || "https://whatapp-ai-egine-production.up.railway.app"
+  process.env.ENGINE_URL || "https://whatapp-ai-egine.onrender.com"
 ).replace(/\/+$/, "");
 const engineSecret = process.env.ENGINE_SECRET || "";
 const supabaseUrl =
